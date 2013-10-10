@@ -333,7 +333,7 @@ include $(srctree)/scripts/Kbuild.include
 
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
-REAL_CC		= $(CROSS_COMPILE)gcc
+CC		= $(CROSS_COMPILE)gcc
 CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
@@ -350,15 +350,25 @@ CHECK		= sparse
 
 # Use the wrapper for the compiler.  This wrapper scans for new
 # warnings and causes the build to stop upon encountering them.
-CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
+# CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
-AFLAGS_MODULE   =
-LDFLAGS_MODULE  =
-CFLAGS_KERNEL	=
+ifdef CONFIG_CC_OPTIMIZE_ALOT
+MODFLAGS	= -DMODULE -O2 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a9 -marm -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-double
+else
+MODFLAGS	= -DMODULE -O2 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -ftree-vectorize -funswitch-loops -march=armv7-a -marm -mfpu=neon-vfpv4 -mtune=cortex-a9
+endif
+CFLAGS_MODULE   = $(MODFLAGS)
+AFLAGS_MODULE   = $(MODFLAGS)
+LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
+ifdef CONFIG_CC_OPTIMIZE_ALOT
+CFLAGS_KERNEL	= -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a9 -marm -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-double
+AFLAGS_KERNEL	= -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a9 -marm -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-double
+else
+CFLAGS_KERNEL	= -O2 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -ftree-vectorize -funswitch-loops -march=armv7-a -marm -mfpu=neon-vfpv4 -mtune=cortex-a9
 AFLAGS_KERNEL	=
+endif
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 
@@ -381,7 +391,7 @@ KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_AFLAGS_MODULE  := -DMODULE
 KBUILD_CFLAGS_MODULE  := -DMODULE
-KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
+KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
@@ -585,6 +595,9 @@ endif
 # This warning generated too much noise in a regular build.
 # Use make W=1 to enable this warning (see scripts/Makefile.build)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
+KBUILD_CFLAGS += $(call cc-disable-warning, uninitialized)
+KBUILD_CFLAGS += $(call cc-disable-warning, array-bounds)
+KBUILD_CFLAGS += $(call cc-disable-warning, unused-value)
 
 ifdef CONFIG_FRAME_POINTER
 KBUILD_CFLAGS	+= -fno-omit-frame-pointer -fno-optimize-sibling-calls
