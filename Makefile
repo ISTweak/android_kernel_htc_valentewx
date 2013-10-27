@@ -354,21 +354,11 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-ifdef CONFIG_CC_OPTIMIZE_ALOT
-MODFLAGS	= -DMODULE -O2 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a9 -marm -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-double
-else
-MODFLAGS	= -DMODULE -O2 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -ftree-vectorize -funswitch-loops -march=armv7-a -marm -mfpu=neon-vfpv4 -mtune=cortex-a9
-endif
-CFLAGS_MODULE   = $(MODFLAGS)
-AFLAGS_MODULE   = $(MODFLAGS)
-LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
-ifdef CONFIG_CC_OPTIMIZE_ALOT
-CFLAGS_KERNEL	= -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a9 -marm -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-double
-AFLAGS_KERNEL	= -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a9 -marm -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-double
-else
-CFLAGS_KERNEL	= -O2 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -ftree-vectorize -funswitch-loops -march=armv7-a -marm -mfpu=neon-vfpv4 -mtune=cortex-a9
+CFLAGS_MODULE   =
+AFLAGS_MODULE   =
+LDFLAGS_MODULE  =
+CFLAGS_KERNEL	=
 AFLAGS_KERNEL	=
-endif
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 
@@ -391,7 +381,7 @@ KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_AFLAGS_MODULE  := -DMODULE
 KBUILD_CFLAGS_MODULE  := -DMODULE
-KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
+KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
